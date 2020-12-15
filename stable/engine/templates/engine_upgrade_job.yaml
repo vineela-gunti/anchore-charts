@@ -28,22 +28,13 @@ spec:
       securityContext:
         {{ toYaml . | nindent 8 }}
       {{- end }}
-     {{- if .Values.anchoreEnterpriseGlobal.enabled }}
-      imagePullSecrets:
-      - name: {{ .Values.anchoreEnterpriseGlobal.imagePullSecretName }}
-    {{- else }}
       {{- with .Values.anchoreGlobal.imagePullSecretName }}
       imagePullSecrets:
       - name: {{ . }}
       {{- end }}
-    {{- end }}
       restartPolicy: Never
       containers:
-      - name: "{{ .Release.Name }}-enterprise-upgrade"
-        {{- if .Values.anchoreEnterpriseGlobal.enabled }}
-        image: {{ .Values.anchoreEnterpriseGlobal.image }}
-        imagePullPolicy: {{ .Values.anchoreEnterpriseGlobal.imagePullPolicy }}
-        {{- else }}
+      - name: "{{ .Release.Name }}-engine-upgrade"
         image: {{ .Values.anchoreGlobal.image }}
         imagePullPolicy: {{ .Values.anchoreGlobal.imagePullPolicy }}
         {{- end }}

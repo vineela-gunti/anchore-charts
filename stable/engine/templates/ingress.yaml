@@ -30,7 +30,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-  {{- if or .Values.ingress.apiHosts .Values.ingress.uiHosts .Values.ingress.feedsHosts .Values.ingress.reportsHosts }}
+  {{- if or .Values.ingress.apiHosts }}
     {{- range .Values.ingress.apiHosts }}
     - host: {{ . | quote }}
       http:
@@ -40,33 +40,6 @@ spec:
             serviceName: {{ template "anchore-engine.api.fullname" $ }}
             servicePort: {{ $.Values.anchoreApi.service.port }}
     {{- end }}
-    {{- range .Values.ingress.uiHosts }}
-    - host: {{ . | quote }}
-      http:
-        paths:
-        - path: {{ $.Values.ingress.uiPath }}
-          backend:
-            serviceName: {{ template "anchore-engine.enterprise-ui.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseUi.service.port }}
-    {{- end }}
-    {{- range .Values.ingress.feedsHosts }}
-    - host: {{ . | quote }}
-      http:
-        paths:
-        - path: {{ $.Values.ingress.feedsPath }}
-          backend:
-            serviceName: {{ template "anchore-engine.enterprise-feeds.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseFeeds.service.port }}
-    {{- end }}
-    {{- range .Values.ingress.reportsHosts }}
-    - host: {{ . | quote }}
-      http:
-        paths:
-        - path: {{ $.Values.ingress.reportsPath }}
-          backend:
-            serviceName: {{ template "anchore-engine.api.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseReports.service.port }}
-    {{- end }}
   {{- else }}
     - http:
         paths:
@@ -75,24 +48,6 @@ spec:
           backend:
             serviceName: {{ template "anchore-engine.api.fullname" $ }}
             servicePort: {{ $.Values.anchoreApi.service.port }}
-        {{- end }}
-        {{- with .Values.ingress.uiPath }}
-        - path: {{ . }}
-          backend:
-            serviceName: {{ template "anchore-engine.enterprise-ui.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseUi.service.port }}
-        {{- end }}
-        {{- with .Values.ingress.feedsPath }}
-        - path: {{ . }}
-          backend:
-            serviceName: {{ template "anchore-engine.enterprise-feeds.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseFeeds.service.port }}
-        {{- end }}
-        {{- with .Values.ingress.reportsPath }}
-        - path: {{ . }}
-          backend:
-            serviceName: {{ template "anchore-engine.api.fullname" $ }}
-            servicePort: {{ $.Values.anchoreEnterpriseReports.service.port }}
         {{- end }}
   {{- end }}
 {{- end -}}

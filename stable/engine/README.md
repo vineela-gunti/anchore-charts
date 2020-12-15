@@ -1,10 +1,8 @@
-# Anchore Engine Helm Chart
+# Anchore Engine OSS Helm Chart
 
 [Instructions for migrating deployments from helm/stable to charts.anchore.io](#migrating-to-the-new-anchore-charts-repository)
 
 This chart deploys the Anchore Engine docker container image analysis system. Anchore Engine requires a PostgreSQL database (>=9.6) which may be handled by the chart or supplied externally, and executes in a service based architecture utilizing the following Anchore Engine services: External API, SimpleQueue, Catalog, Policy Engine, and Analyzer.
-
-This chart can also be used to install the following Anchore Enterprise services: GUI, RBAC, Reporting, Notifications & On-premises Feeds. Enterprise services require a valid Anchore Enterprise License as well as credentials with access to the private DockerHub repository hosting the images. These are not enabled by default.
 
 Each of these services can be scaled and configured independently.
 
@@ -12,19 +10,18 @@ See [Anchore Engine](https://github.com/anchore/anchore-engine) for more project
 
 ## Chart Details
 
-The chart is split into global and service specific configurations for the OSS Anchore Engine, as well as global and services specific configurations for the Enterprise components.
+The chart is split into global and service specific configurations for the open source Anchore Engine.
 
   * The `anchoreGlobal` section is for configuration values required by all Anchore Engine components.
-  * The `anchoreEnterpriseGlobal` section is for configuration values required by all Anchore Engine Enterprise components.
   * Service specific configuration values allow customization for each individual service.
 
-For a description of each component, view the official documentation at: [Anchore Enterprise Service Overview](https://docs.anchore.com/current/docs/overview/architecture/)
+For a description of each component, view the official documentation at: [Anchore Service Overview](https://docs.anchore.com/current/docs/overview/architecture/)
 
-## Installing the Anchore Engine Helm Chart
+## Installing the Anchore Engine OSS Helm Chart
 ### TL;DR
 ```
 helm repo add anchore https://charts.anchore.io
-helm install my-release anchore/anchore-engine
+helm install my-release anchore/engine
 ```
 
 Anchore Engine will take approximately 3 minutes to bootstrap. After the initial bootstrap period, Anchore Engine will begin a vulnerability feed sync. During this time, image analysis will show zero vulnerabilities until the sync is completed. This sync can take multiple hours depending on which feeds are enabled. The following anchore-cli command is available to poll the system and report back when the engine is bootstrapped and the vulnerability feeds are all synced up. `anchore-cli system wait`
@@ -51,74 +48,6 @@ postgresql:
 anchoreGlobal:
   defaultAdminPassword: <PASSWORD>
   defaultAdminEmail: <EMAIL>
-```
-
-## Adding Enterprise Components
-
- The following features are available to Anchore Enterprise customers. Please contact the Anchore team for more information about getting a license for the enterprise features. [Anchore Enterprise Demo](https://anchore.com/demo/)
-
-    * Role based access control
-    * LDAP integration
-    * Graphical user interface
-    * Customizable UI dashboards
-    * On-premises feeds service
-    * Proprietary vulnerability data feed (vulnDB, MSRC)
-    * Anchore reporting API
-    * Notifications - Slack, GitHub, Jira, etc
-    * Microsoft image vulnerability scanning
-
-### Enabling Enterprise Services
-Enterprise services require an Anchore Enterprise license, as well as credentials with
-permission to the private docker repositories that contain the enterprise images.
-
-To use this Helm chart with the enterprise services enabled, perform these steps.
-
-1. Create a kubernetes secret containing your license file.
-
-    `kubectl create secret generic anchore-enterprise-license --from-file=license.yaml=<PATH/TO/LICENSE.YAML>`
-
-1. Create a kubernetes secret containing DockerHub credentials with access to the private anchore enterprise repositories.
-
-    `kubectl create secret docker-registry anchore-enterprise-pullcreds --docker-server=docker.io --docker-username=<DOCKERHUB_USER> --docker-password=<DOCKERHUB_PASSWORD> --docker-email=<EMAIL_ADDRESS>`
-
-1. (demo) Install the Helm chart using default values
-    #### Helm v3 installation
-    `helm repo add anchore https://charts.anchore.io`
-
-    `helm install <release_name> --set anchoreEnterpriseGlobal.enabled=true anchore/anchore-engine`
-
-2. (production) Install the Helm chart using a custom anchore_values.yaml file - *see examples below*
-    #### Helm v3 installation
-    `helm repo add anchore https://charts.anchore.io`
-
-    `helm install <release_name> -f anchore_values.yaml anchore/anchore-engine`
-
-#### Example anchore_values.yaml - installing Anchore Enterprise
-
-*Note: Installs with chart managed PostgreSQL & Redis databases. This is not a guaranteed production ready config.*
-```
-## anchore_values.yaml
-
-postgresql:
-  postgresPassword: <PASSWORD>
-  persistence:
-    size: 50Gi
-
-anchoreGlobal:
-  defaultAdminPassword: <PASSWORD>
-  defaultAdminEmail: <EMAIL>
-  enableMetrics: True
-
-anchoreEnterpriseGlobal:
-  enabled: True
-
-anchore-feeds-db:
-  postgresPassword: <PASSWORD>
-  persistence:
-    size: 20Gi
-
-anchore-ui-redis:
-  password: <PASSWORD>
 ```
 
 ## Installing on OpenShift
@@ -155,254 +84,11 @@ anchoreGlobal:
   openShiftDeployment: True
 ```
 
-To perform an Enterprise deployment on OpenShift use the following anchore_values.yaml configuration
-
-*Note: Installs with chart managed PostgreSQL database. This is not a guaranteed production ready config.*
-```
-## anchore_values.yaml
-
-postgresql:
-  image: registry.access.redhat.com/rhscl/postgresql-96-rhel7
-  imageTag: latest
-  extraEnv:
-  - name: POSTGRESQL_USER
-    value: anchoreengine
-  - name: POSTGRESQL_PASSWORD
-    value: anchore-postgres,123
-  - name: POSTGRESQL_DATABASE
-    value: anchore
-  - name: PGUSER
-    value: postgres
-  - name: LD_LIBRARY_PATH
-    value: /opt/rh/rh-postgresql96/root/usr/lib64
-  - name: PATH
-     value: /opt/rh/rh-postgresql96/root/usr/bin:/opt/app-root/src/bin:/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-    postgresPassword: <PASSWORD>
-    persistence:
-      size: 20Gi
-
-anchoreGlobal:
-  defaultAdminPassword: <PASSWORD>
-  defaultAdminEmail: <EMAIL>
-  enableMetrics: True
-  openShiftDeployment: True
-
-anchoreEnterpriseGlobal:
-  enabled: True
-
-anchore-feeds-db:
-  image: registry.access.redhat.com/rhscl/postgresql-96-rhel7
-  imageTag: latest
-  extraEnv:
-  - name: POSTGRESQL_USER
-    value: anchoreengine
-  - name: POSTGRESQL_PASSWORD
-    value: anchore-postgres,123
-  - name: POSTGRESQL_DATABASE
-    value: anchore
-  - name: PGUSER
-    value: postgres
-  - name: LD_LIBRARY_PATH
-    value: /opt/rh/rh-postgresql96/root/usr/lib64
-  - name: PATH
-     value: /opt/rh/rh-postgresql96/root/usr/bin:/opt/app-root/src/bin:/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-    postgresPassword: <PASSWORD>
-    persistence:
-      size: 50Gi
-
-anchore-ui-redis:
-  password: <PASSWORD>
-```
-
 # Chart Updates
 See the anchore-engine [CHANGELOG](https://github.com/anchore/anchore-engine/blob/master/CHANGELOG.md) for updates to anchore engine.
 
 ## Upgrading from previous chart versions
-A Helm post-upgrade hook job will shut down all previously running Anchore services and perform the Anchore DB upgrade process using a kubernetes job. The upgrade will only be considered successful when this job completes successfully. Performing an upgrade will cause the Helm client to block until the upgrade job completes and the new Anchore service pods are started. To view progress of the upgrade process, tail the logs of the upgrade jobs `anchore-engine-upgrade` and `anchore-enterprise-upgrade`. These job resources will be removed upon a successful helm upgrade.
-
-# Chart version 1.10.0
-Chart dependency declarations have been updated to be compatible with Helm v3.4.0
-
-# Chart version 1.8.0
-
-The following Anchore-Engine features were added with this version:
-  * Malware scanning - see .Values.anchoreAnalyzer.configFile.malware
-  * Binary content scanning
-  * Content hints file analysis - see .Values.anchoreAnalyzer.enableHints
-  * Updated image deletion behavior
-
-For more details see - https://docs.anchore.com/current/docs/engine/releasenotes/080
-
-# Chart version 1.7.0
-
-Starting with version 1.7.0 the anchore-engine chart will be hosted on charts.anchore.io - if you're upgrading from a previous version of the chart, you will need to delete your previous deployment and redeploy Anchore Engine using the chart from the Anchore Charts repository. 
-
-This version of the chart includes the dependent Postgresql chart in the charts/ directory rather then pulling it from upstream. All apiVersions were updated for compatibility with kubernetes v1.16+ and the postgresql image has been updated to version 9.6.18. The chart version also updates to the latest version of the Redis chart from Bitnami. These dependency updates require deleting and re-installing your chart. If the following process is performed, no data should be lost.
-
-## Migrating To The New Anchore Charts Repository
-
-For these examples, we assume that your namespace is called `my-namespace` and your Anchore installation is called `my-anchore`.
-
-These examples use Helm version 3 and kubectl client version 1.18, server version 1.18.
-
-#### ENSURE MIGRATION IS PERFORMED SEPARATELY FROM ANCHORE ENGINE UPGRADES
-
-All helm installation steps will include a flag to override the Anchore Engine/Enterprise images with your current running version. Upgrading your version of Anchore can be performed after moving to the new chart from charts.anchore.io. Record the version of your Anchore deployment and use it anytime the instructions refer to the Engine Code Version.
-
-### Determine Currently Running Anchore Version
-
-Connect to the anchore-api pod, issue the following command and record the Engine Code Version:
-
-```
-[anchore@anchore-api anchore-engine]$ anchore-cli system status
-Service analyzer (anchore-anchore-engine-analyzer-7cd9c5cb78-j8n8p, http://anchore-anchore-engine-analyzer:8084): up
-Service apiext (anchore-anchore-engine-api-54cff87fcd-s4htm, http://anchore-anchore-engine-api:8228): up
-Service catalog (anchore-anchore-engine-catalog-5898dc67d6-64b8n, http://anchore-anchore-engine-catalog:8082): up
-Service simplequeue (anchore-anchore-engine-simplequeue-5cc449cc5c-djkf7, http://anchore-anchore-engine-simplequeue:8083): up
-Service policy_engine (anchore-anchore-engine-policy-68b99ddf96-d4gbl, http://anchore-anchore-engine-policy:8087): up
-
-Engine DB Version: 0.0.13
-Engine Code Version: 0.7.2
-```
-
-## If Using An External Postgresql Database (not included as chart dependency)
-```
-$ helm uninstall --namespace=my-namespace my-anchore
-$ helm repo add anchore https://charts.anchore.io
-$ helm repo update
-$ export ANCHORE_VERSION=0.7.2 # USE YOUR ENGINE CODE VERSION HERE
-$ helm install --namespace=my-namespace --set anchoreGlobal.image=docker.io/anchore/anchore-engine:v${ANCHORE_VERSION} --set anchoreEnterpriseGlobal.image=docker.io/anchore/enterprise:v${ANCHORE_VERSION} -f anchore_values.yaml my-anchore anchore/anchore-engine
-```
-
-## If Using The Included Postgresql Chart
-
-When utilizing the included Postgresql chart you will need to reuse the persistent volume claims that are attached to your current deployment. These existing claims will be utilized when re-installing anchore-engine using the new chart from charts.anchore.io.
-
-#### Determine Your Database PersistentVolumeClaim
-
-Find the name of the database PersistentVolumeClaim using `kubectl`:
-
-```
-$ kubectl get persistentvolumeclaim --namespace my-namespace
-NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-anchore-postgresql   Bound   pvc-739f6f21-b73b-11ea-a2b9-42010a800176    20Gi       RWO            standard       2d
-```
-
-The name of your PersistentVolumeClaim in the example shown is `my-anchore-postgresql`. Note that, as you will need it later.
-
-Anchore Enterprise users with a standalone Feeds Service will see a different set of PersistentVolumeClaims:
-
-```
-$ kubectl get persistentvolumeclaim --namespace my-namespace
-NAME                                           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-anchore-anchore-feeds-db                    Bound    pvc-cd7ebb6f-bbe0-11ea-b9bf-42010a800020   20Gi       RWO            standard       3d
-my-anchore-postgresql                          Bound    pvc-cd7dc7d2-bbe0-11ea-b9bf-42010a800020   20Gi       RWO            standard       3d
-```
-
-The names of the PersistentVolumeClaims in the example shown are `my-anchore-anchore-feeds-db` and `my-anchore-postgresql`. You may see other persistent volume claims, but only `my-anchore-anchore-feeds-db` and `my-anchore-postgresql` are relevant for this migration; note the names, as you will need them later.
-
-#### Uninstall Your Anchore Installation With Helm
-
-```
-$ helm uninstall --namespace=my-namespace my-anchore
-release "my-anchore" uninstalled
-```
-
-Anchore Enterprise users will want to remove the Redis DB PersistentVolumeClaim; this will delete all current session data but will not affect stability of the deployment:
-
-```
-$ kubectl delete pvc redis-data-my-anchore-anchore-ui-redis-master-0
-```
-
-Your other PersistentVolumeClaims will still be resident in your cluster (we're showing results from an Anchore Enterprise installation that has a standalone Feeds Service below; Anchore Enterprise users without a standalone Feeds Service and Anchore Engine users will not see `my-anchore-anchore-feeds-db`):
-
-```
-$ kubectl get persistentvolumeclaim --namespace my-namespace
-NAME                          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-anchore-anchore-feeds-db   Bound    pvc-a22abf70-bbb9-11ea-840b-42010a8001d8   20Gi       RWO            standard       3d
-my-anchore-postgresql         Bound    pvc-e6daf90a-bbb8-11ea-840b-42010a8001d8   20Gi       RWO            standard       3d
-```
-
-#### Add The New Anchore Helm Chart Repository
-
-```
-$ helm repo add anchore https://charts.anchore.io
-"anchore" has been added to your repositories
-
-$ helm repo update
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "anchore" chart repository
-```
-
-#### Install The Anchore Helm Chart
-
-Update your anchore_values.yaml file as shown, using the PersistentVolumeClaim values from above:
-
-Engine only deployment values file example:
-```
-# anchore_values.yaml
-
-  postgresql:
-    persistence:
-      existingclaim: my-anchore-postgresql
-```
-
-Enterprise deployment values file example:
-```
-# anchore_values.yaml
-
-postgresql:
-  persistence:
-    existingclaim: my-anchore-postgresql
-
-anchore-feeds-db:
-  persistence:
-    existingclaim: my-anchore-anchore-feeds-db
-```
-
-Install a new Anchore Engine deployment using the chart from charts.anchore.io
-```
-$ export ANCHORE_VERSION=0.7.2 # USE YOUR ENGINE CODE VERSION HERE
-$ helm install --namespace=my-namespace --set anchoreGlobal.image=docker.io/anchore/anchore-engine:v${ANCHORE_VERSION} --set anchoreEnterpriseGlobal.image=docker.io/anchore/enterprise:v${ANCHORE_VERSION} -f anchore_values.yaml my-anchore anchore/anchore-engine
-
-NAME: my-anchore
-LAST DEPLOYED: Thu Jun 25 12:25:33 2020
-NAMESPACE: my-namespace
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-To use Anchore Engine you need the URL, username, and password to access the API.
-...more instructions...
-```
-
-Verify that your PersistentVolumeClaims are bound (output may vary):
-
-```
-$ kubectl get persistentvolumeclaim --namespace my-namespace
-NAME                          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-my-anchore-anchore-feeds-db   Bound    pvc-a22abf70-bbb9-11ea-840b-42010a8001d8   20Gi       RWO            standard       3d
-my-anchore-postgresql         Bound    pvc-e6daf90a-bbb8-11ea-840b-42010a8001d8   20Gi       RWO            standard       3d
-```
-
-Connect to the anchore-api pod and validate that your installation still contains all of your previously scanned images.
-
-```
-[anchore@anchore-api anchore-engine]$ anchore-cli image list
-Full Tag                                   Image Digest                                                                Analysis Status 
-docker.io/alpine:latest                    sha256:a15790640a6690aa1730c38cf0a440e2aa44aaca9b0e8931a9f2b0d7cc90fd65     analyzed
-docker.io/anchore/anchore-engine:latest    sha256:624c9f662233838d1046809135a70ab88d79bd0f2e53dd74bb3d67d10d997bd1     analyzed
-docker.io/ubuntu:latest                    sha256:60f560e52264ed1cb7829a0d59b1ee7740d7580e0eb293aca2d722136edb1e24     analyzed
-```
-
-You are now running Anchore from the new chart repository, with your data in place. 
-
-## Upgrade To Latest Version of Anchore
-Now that you're migrated to charts.anchore.io you can upgrade Anchore Engine to the latest version if desired.
-
-```
-$ helm upgrade --namespace my-namespace -f anchore_values.yaml my-anchore anchore/anchore-engine
-```
+A Helm post-upgrade hook job will shut down all previously running Anchore services and perform the Anchore DB upgrade process using a kubernetes job. The upgrade will only be considered successful when this job completes successfully. Performing an upgrade will cause the Helm client to block until the upgrade job completes and the new Anchore service pods are started. To view progress of the upgrade process, tail the logs of the upgrade jobs `anchore-engine-upgrade`. These job resources are safe delete after a successful helm upgrade completes.
 
 # Configuration
 
@@ -428,18 +114,11 @@ ingress:
       kubernetes.io/ingress.class: alb
       alb.ingress.kubernetes.io/scheme: internet-facing
     apiPath: /v1/*
-    uiPath: /*
     apiHosts:
       - anchore-api.example.com
-    uiHosts:
-      - anchore-ui.example.com
 
   anchoreApi:
     service:
-      type: NodePort
-
-  anchoreEnterpriseUi:
-    service
       type: NodePort
 ```
 
@@ -450,18 +129,11 @@ ingress:
     annotations:
       kubernetes.io/ingress.class: gce
     apiPath: /v1/*
-    uiPath: /*
     apiHosts:
       - anchore-api.example.com
-    uiHosts:
-      - anchore-ui.example.com
 
   anchoreApi:
     service:
-      type: NodePort
-
-  anchoreEnterpriseUi:
-    service
       type: NodePort
   ```
 
