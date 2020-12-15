@@ -137,7 +137,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ template "anchore-engine.fullname" . }}
+            name: {{ template "anchore-engine.catalog.fullname" . }}
         {{- if .Values.anchoreGlobal.openShiftDeployment }}
         - name: service-config-volume
           emptyDir: {}
@@ -228,6 +228,7 @@ data:
         endpoint_hostname: {{ template "anchore-engine.catalog.fullname" . }}
         listen: 0.0.0.0
         port: {{ .Values.anchoreCatalog.service.port }}
+        max_request_threads: {{ default 50 .Values.anchoreCatalog.maxRequestThreads }}
         cycle_timer_seconds: 1
         cycle_timers:
           # Interval to check for an update to a tag
@@ -238,6 +239,9 @@ data:
           vulnerability_scan: {{ .Values.anchoreCatalog.cycleTimers.vulnerability_scan }}
           # Interval at which the catalog looks for new work to put on the image analysis queue.
           analyzer_queue: {{ .Values.anchoreCatalog.cycleTimers.analyzer_queue }}
+          # Interval at which the catalog archival tasks are triggered.
+          archive_tasks: {{ .Values.anchoreCatalog.cycleTimers.archive_tasks }}
+          image_gc: 60
           # Interval notifications will be processed for state changes
           notifications: {{ .Values.anchoreCatalog.cycleTimers.notifications }}
           # Intervals service state updates are polled for the system status
@@ -246,8 +250,10 @@ data:
           repo_watcher: {{ .Values.anchoreCatalog.cycleTimers.repo_watcher }}
         event_log:
           {{- toYaml .Values.anchoreCatalog.events | nindent 10 }}
-        archive:
-          {{- toYaml .Values.anchoreCatalog.archive | nindent 10 }}
+        analysis_archive:
+          {{- toYaml .Values.anchoreCatalog.analysis_archive | nindent 10 }}
+        object_store:
+          {{- toYaml .Values.anchoreCatalog.object_store | nindent 10 }}
         {{- if .Values.anchoreGlobal.internalServicesSsl.enabled }}
         ssl_enable: {{ .Values.anchoreGlobal.internalServicesSsl.enabled }}
         ssl_cert: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretCertName }}"

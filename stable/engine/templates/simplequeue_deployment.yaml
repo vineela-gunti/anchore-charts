@@ -137,7 +137,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ template "anchore-engine.fullname" .}}
+            name: {{ template "anchore-engine.simplequeue.fullname" .}}
         {{- if .Values.anchoreGlobal.openShiftDeployment }}
         - name: service-config-volume
           emptyDir: {}
@@ -228,6 +228,7 @@ data:
         endpoint_hostname: {{ template "anchore-engine.simplequeue.fullname" . }}
         listen: 0.0.0.0
         port: {{ .Values.anchoreSimpleQueue.service.port }}
+        max_request_threads: {{ default 50 .Values.anchoreSimpleQueue.maxRequestThreads }}
         {{- if .Values.anchoreGlobal.internalServicesSsl.enabled }}
         ssl_enable: {{ .Values.anchoreGlobal.internalServicesSsl.enabled }}
         ssl_cert: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretCertName }}"

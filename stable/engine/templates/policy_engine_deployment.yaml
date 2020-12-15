@@ -139,7 +139,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ template "anchore-engine.fullname" . }}
+            name: {{ template "anchore-engine.policy-engine.fullname" . }}
         - name: {{ $component }}-scratch
           {{ toYaml .Values.anchoreGlobal.scratchVolume.details | nindent 10 }}
         {{- if .Values.anchoreGlobal.openShiftDeployment }}
@@ -232,6 +232,7 @@ data:
         endpoint_hostname: {{ template "anchore-engine.policy-engine.fullname" . }}
         listen: 0.0.0.0
         port: {{ .Values.anchorePolicyEngine.service.port }}
+        max_request_threads: {{ default 50 .Values.anchorePolicyEngine.maxRequestThreads }}
         cycle_timer_seconds: 1
         cycle_timers:
           {{- toYaml .Values.anchorePolicyEngine.cycleTimers | nindent 10 }}

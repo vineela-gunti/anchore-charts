@@ -93,7 +93,7 @@ spec:
         - name: analyzer-api
           containerPort: {{ .Values.anchoreAnalyzer.containerPort }}
         volumeMounts:
-        - name: analyzer-config-volume
+        - name: config-volume
           mountPath: /anchore_service/analyzer_config.yaml
           subPath: analyzer_config.yaml
         - name: config-volume
@@ -142,7 +142,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ template "anchore-engine.fullname" .}}
+            name: {{ template "anchore-engine.analyzer.fullname" . }}
         - name: {{ $component }}-scratch
           {{ toYaml .Values.anchoreGlobal.scratchVolume.details | nindent 10 }}
         {{- if .Values.anchoreGlobal.openShiftDeployment }}
@@ -153,9 +153,6 @@ spec:
         - name: run
           emptyDir: {}
         {{- end }}
-        - name: analyzer-config-volume
-          configMap:
-            name: {{ template "anchore-engine.analyzer.fullname" . }}
         {{- with .Values.anchoreGlobal.certStoreSecretName }}
         - name: certs
           secret:
@@ -206,6 +203,7 @@ data:
         endpoint_hostname: {{ template "anchore-engine.analyzer.fullname" . }}
         listen: 0.0.0.0
         port: {{ .Values.anchoreAnalyzer.containerPort }}
+        max_request_threads: {{ default 50 .Values.anchoreAnalyzer.maxRequestThreads }}
         cycle_timer_seconds: 1
         cycle_timers:
           {{- toYaml .Values.anchoreAnalyzer.cycleTimers | nindent 10 }}
@@ -223,6 +221,7 @@ data:
         ssl_cert: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretCertName }}"
         ssl_key: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretKeyName }}"
         {{- end }}
+
   analyzer_config.yaml: |
     {{- with .Values.anchoreAnalyzer.configFile }}
     {{- toYaml . | nindent 4 }}
