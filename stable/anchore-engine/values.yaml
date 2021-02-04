@@ -547,6 +547,23 @@ anchoreCatalog:
   tolerations: []
   affinity: {}
 
+  runtime_inventory:
+    # If Anchore is running in Kubernetes, we can collect runtime inventory data out of the box
+    kubernetes:
+      report_anchore_cluster:
+        # If set to true, Anchore will use its own service-account to try and collect runtime inventory data for all namespaces
+        # Note: requires a value for anchore_cluster_name to populate inventory image context
+        enabled: true
+        anchore_cluster_name: anchore
+        namespaces:
+          - all
+
+    # This setting tells Anchore how long an image can be missing from an inventory report before it is removed from
+    # The working set. Note: The image will still have a historical record in the reports service, subject to data history
+    # constraints as part of that service.
+    # Note: if a runtime inventory image's digest is also in anchore for regular image analysis, it won't be removed.
+    image_ttl_days: 1
+
 # Pod configuration for the anchore engine policy service.
 anchorePolicyEngine:
   replicaCount: 1

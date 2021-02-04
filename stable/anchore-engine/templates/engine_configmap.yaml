@@ -256,4 +256,11 @@ data:
         ssl_cert: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretCertName }}"
         ssl_key: "/home/anchore/certs/{{- .Values.anchoreGlobal.internalServicesSsl.certSecretKeyName }}"
         {{- end }}
-
+    runtime_inventory:
+      kubernetes:
+        report_anchore_cluster:
+          enabled: {{ .Values.anchoreCatalog.runtime_inventory.kubernetes.report_anchore_cluster.enabled }}
+          anchore_cluster_name: {{ .Values.anchoreCatalog.runtime_inventory.kubernetes.report_anchore_cluster.anchore_cluster_name }}
+          namespaces:
+            {{- toYaml .Values.anchoreCatalog.runtime_inventory.kubernetes.report_anchore_cluster.namespaces | nindent 12 }}
+      image_ttl_days: {{ .Values.anchoreCatalog.runtime_inventory.image_ttl_days }}
