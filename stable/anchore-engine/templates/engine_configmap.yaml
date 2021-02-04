@@ -218,6 +218,7 @@ data:
           service_watcher: {{ .Values.anchoreCatalog.cycleTimers.service_watcher }}
           # Interval between checks to repo for new tags
           repo_watcher: {{ .Values.anchoreCatalog.cycleTimers.repo_watcher }}
+          k8s_watcher: {{ .Values.anchoreCatalog.cycleTimers.k8s_watcher }}
         event_log:
           {{- toYaml .Values.anchoreCatalog.events | nindent 10 }}
         analysis_archive:

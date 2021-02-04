@@ -420,6 +420,8 @@ anchoreCatalog:
     repo_watcher: 60
     # Interval for when the catalog garbage collects images marked for deletion
     image_gc: 60
+    # Interval for the runtime inventory image execution poll
+    k8s_watcher: 300
 
   # Event log configuration for webhooks
   events:
